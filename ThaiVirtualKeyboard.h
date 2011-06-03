@@ -32,6 +32,14 @@ public:
   /// Destructor
   ~ThaiVirtualKeyboard() { }
 
+signals:
+  /// Key press
+  void KeyPressed(int tis620val);
+
+  /// Key press to pass on to parent
+  void PassThroughkeyPressEvent(QKeyEvent *e);
+
+protected:
   /// Where the key was pressed
   void mousePressEvent(QMouseEvent *e);
 
@@ -50,14 +58,13 @@ public:
   /// Close the widget
   void closeEvent(QCloseEvent *);
 
-signals:
-  /// Key press
-  void KeyPressed(int tis620val);
-
-  /// Key press to pass on to parent
-  void PassThroughkeyPressEvent(QKeyEvent *e);
-
 private:
+  /// Draw the keyboard
+  void drawKeyboard(bool shift);
+
+  /// Calculate the minimum size of TVK, based on the current font size
+  void calculateTVKSize();
+
   /// Width of widget, in keys
   int columns;
 
@@ -77,7 +84,7 @@ private:
   int keycol;
 
   /// Area of key to be highlighted
-  QRect highlightarea;
+  QRect highlightArea;
 
   /// Image of the keyboard
   QPixmap *thekeyboard;
@@ -85,21 +92,19 @@ private:
   /// Image of the shift keyboard
   QPixmap *shiftkeyboard;
 
-  /// Draw the keyboard
-  void DrawKeyboard(bool shift);
-
-  /// Calculate the minimum size of TVK, based on the current font size
-  void CalculateTVKSize();
-
   /// Name of current font
-  QString tvk_font;
+  QString tvkFontName;
 
   /// Size of current font
-  int tvk_font_size;
+  int tvkFontSize;
 
-  /// Previous font (in case you choose a bad size)
-  QString previous_font;
-  int previous_font_size;
+  // Store previous font in case you choose a bad size //
+
+  /// Previous font name
+  QString previousFontName;
+
+  /// Previous font size
+  int previousFontSize;
 
   // Action keys
   QPixmap *pbackspace_large, *pbackspace_medium, *pbackspace_small;

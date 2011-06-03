@@ -1,7 +1,7 @@
 /**
  * @file   virtualkb.cc
- * @author Lyndon Hill
  * @brief  TVK test
+ * @author Lyndon Hill
  * @date   2008.04.06 Adapted to QT3/QT4
  */
 
