@@ -83,6 +83,9 @@ private:
   /// Key pressed column
   int keycol;
 
+  /// Indicate which size action keys are in use: 0 = small, 1 = medium, 2 = large
+  int actionKeySize;
+
   /// Area of key to be highlighted
   QRect highlightArea;
 

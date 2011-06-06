@@ -59,6 +59,8 @@ int tvk_shifted_keymap[75] = {
 
 ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
 {
+  actionKeySize = 0;  // temporary initialisation value
+
   // Format of the keyboard
   columns = 15;
   rows = 5;
@@ -143,8 +145,8 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
   else
     currentkeyboard = thekeyboard;
 
-  int keywidth = currentkeyboard->width()/columns;
-  int keyheight = currentkeyboard->height()/rows;
+  float keywidth  = (float)(currentkeyboard->width())/(float)(columns);
+  float keyheight = (float)(currentkeyboard->height())/(float)(rows);
 
   int tvk_code;
 
@@ -232,10 +234,10 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
     break;
 
     case 4:
-    if((keypos.x() > keywidth*5) && (keypos.x() < keywidth*10))
+    if((keypos.x() > keywidth*4) && (keypos.x() < keywidth*11))
     {
       press_column = 0;
-      highlightArea.setCoords(keywidth*5+1, keyheight*4+1, keywidth*10, keyheight*5-1); // space
+      highlightArea.setCoords(keywidth*4+1, keyheight*4+1, keywidth*11, keyheight*5-1); // space
     }
     break;
   }
@@ -341,36 +343,36 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   QString compoundcap;
 
   // Get size of standard key
-  double keywidth  = (double)(keyboard->width())/(double)(columns);
-  double keyheight = (double)(keyboard->height())/(double)(rows);
+  float keywidth  = (float)(keyboard->width())/(float)(columns);
+  float keyheight = (float)(keyboard->height())/(float)(rows);
 
   // select size of action keys
-  if((keywidth > 36) && (keyheight > 36))
+  switch(actionKeySize)
   {
-    // large
-    pbackspace = pbackspace_large;
-    ptab = ptab_large;
-    penter = penter_large;
-    pshift = pshift_large;
-    pfont = pfont_large;
-  }
-  else if((keywidth > 20) && (keyheight > 20))
-  {
-    // medium
-    pbackspace = pbackspace_medium;
-    ptab = ptab_medium;
-    penter = penter_medium;
-    pshift = pshift_medium;
-    pfont = pfont_medium;
-  }
-  else
-  {
-    // small
+    case 0:
     pbackspace = pbackspace_small;
     ptab = ptab_small;
     penter = penter_small;
     pshift = pshift_small;
     pfont = pfont_small;
+    break;
+
+    default:
+    case 1:
+    pbackspace = pbackspace_medium;
+    ptab = ptab_medium;
+    penter = penter_medium;
+    pshift = pshift_medium;
+    pfont = pfont_medium;
+    break;
+
+    case 2:
+    pbackspace = pbackspace_large;
+    ptab = ptab_large;
+    penter = penter_large;
+    pshift = pshift_large;
+    pfont = pfont_large;
+    break;
   }
 
   // Get size of keyboard image
@@ -409,8 +411,8 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     mypaint->drawLine((int)((a+1.5)*keywidth), keyheight*3, (int)((a+1.5)*keywidth), keyheight*4);
 
   mypaint->drawLine(keywidth*14, keyheight*3, keywidth*14, keyheight*4);
-  mypaint->drawLine(keywidth*5, keyheight*4, keywidth*5, kbheight);
-  mypaint->drawLine(keywidth*10, keyheight*4, keywidth*10, kbheight);
+  mypaint->drawLine(keywidth*4, keyheight*4, keywidth*4, kbheight);
+  mypaint->drawLine(keywidth*11, keyheight*4, keywidth*11, kbheight);
  
   // Draw keycaps
  
@@ -493,12 +495,12 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   // Fill in unused areas
   // mypaint->fillRect(1, keyheight*2+1, keywidth*1-1, keyheight-1, QColor(64,64,64));
   int row5height = kbheight-1 - (int)(keyheight*4);
-  int spaceright = kbwidth-1 - (int)(keywidth*10);
+  int spaceright = kbwidth-1 - (int)(keywidth*11);
   int shiftright = kbwidth-1 - (int)(keywidth*14);
 
   mypaint->fillRect(keywidth*14+1, keyheight*3+1, shiftright, keyheight+1, QColor(64,64,64));
-  mypaint->fillRect(1, keyheight*4+1, keywidth*5-1, row5height, QColor(64,64,64));
-  mypaint->fillRect(keywidth*10+1, keyheight*4+1, spaceright, row5height, QColor(64,64,64));
+  mypaint->fillRect(1, keyheight*4+1, keywidth*4-1, row5height, QColor(64,64,64));
+  mypaint->fillRect(keywidth*11+1, keyheight*4+1, spaceright, row5height, QColor(64,64,64));
 
 //  std::cerr << "Widget dimensions: " << this->width() << "x" << this->height() << " keys: " << keywidth << "x" << keyheight << "\n";
 
@@ -593,7 +595,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
   int a, b;
   int px, py;
 
-  keywidth = this->width()/columns;
+  keywidth  = this->width()/columns;
   keyheight = this->height()/rows;
 
   if((keywidth > 36) && (keyheight > 36))
@@ -653,11 +655,11 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
     }
     else
     {
-      // Draw action keys
+      // Draw action keys : get positioning of graphic
       switch(tisvalue)
       {
         case 32: // space
-        break;   // do nothing
+        break;   // do nothing - no graphic
 
         case 1: // left shift
         action = *shift;
@@ -805,15 +807,6 @@ void ThaiVirtualKeyboard::calculateTVKSize()
   if(fm.width(QChar(maimalai)) > glyph_width) glyph_width = fm.width(QChar(maimalai));
 
 /*
-  // Verify against action keys
-  int sheight = QPixmap(shift).height();
-  if(sheight > glyph_height) glyph_height = sheight;
-
-  int twidth = QPixmap(tab).width();
-  if(twidth > glyph_width) glyph_width = twidth;
-*/
-
-/*
   std::cerr << "am left bearing = " << fm.leftBearing(QChar(am)) << "\n";
   if(fm.leftBearing(QChar(am)) < 0)
   {
@@ -821,16 +814,27 @@ void ThaiVirtualKeyboard::calculateTVKSize()
   }
 */
 
+  if((glyph_width > 36) && (glyph_height > 36))
+  {
+    border = 8;
+    actionKeySize = 2;
+  }
+  else if((glyph_width > 20) && (glyph_height > 20))
+  {
+    border = 4;
+    actionKeySize = 1;
+  }
+  else
+  {
+    border = 2;
+    actionKeySize = 0;
+  }
+
   min_height = glyph_height*rows + border*rows*2;
   min_width  = glyph_width*columns + border*columns*2;
 
   this->setMinimumSize(min_width, min_height);
-
-  if((this->width() > min_width) || (this->height() > min_height))
-  {
-//    std::cerr << "Resizing to " << min_width << " X " << min_height << "\n";
-    this->resize(min_width, min_height);
-  }
+  this->resize(min_width, min_height);
 
   // Make sure TVK stays on screen!
   if((this->pos().x() < 0) || (this->pos().y() < 0))
