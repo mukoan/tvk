@@ -746,18 +746,18 @@ void ThaiVirtualKeyboard::keyPressEvent(QKeyEvent *e)
     calculateTVKSize();
   }
 #if QT_VERSION > 0x040000
-  else if((e->key() == Qt::Key_Period) && (e->modifiers() == Qt::ControlModifier))
+  else if((e->key() == Qt::Key_Plus) && (e->modifiers() == Qt::ControlModifier | Qt::ShiftModifier))
 #else
-  else if((e->key() == Qt::Key_Period) && (e->state() == Qt::ControlButton))
+  else if((e->key() == Qt::Key_Plus) && (e->state() == Qt::ControlButton | Qt::ShiftButton))
 #endif
   {
     tvkFontSize++;
     calculateTVKSize();
   }
 #if QT_VERSION > 0x040000
-  else if((e->key() == Qt::Key_Comma) && (e->modifiers() == Qt::ControlModifier))
+  else if((e->key() == Qt::Key_Minus) && (e->modifiers() == Qt::ControlModifier))
 #else
-  else if((e->key() == Qt::Key_Comma) && (e->state() == Qt::ControlButton))
+  else if((e->key() == Qt::Key_Minus) && (e->state() == Qt::ControlButton))
 #endif
   {
     tvkFontSize--;
