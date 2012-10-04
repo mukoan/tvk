@@ -507,7 +507,6 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   // Highlight shift keys
   QPixmap hshift = *pshift;
   QRgb pel;
-  int inverse;
 
   if(shiftengage == true)
   {
@@ -523,7 +522,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
       {
         pel = inverted.pixel(a, b);
  
-        inverse = qRed(pel);
+        int inverse = qRed(pel);
         inverted.setPixel(a, b, qRgb(255-inverse, 255-inverse, 255-inverse));
       }
     }
@@ -585,14 +584,11 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
 
   QString compoundcap;
   QChar keycap;
-  int tisvalue;
 
   int keywidth, keyheight;
   QImage inverted; 
   QPixmap action, *shift, *tab, *backspace, *enter, *font;
   QRgb pel;
-  int inverse;
-  int a, b;
   int px, py;
 
   keywidth  = this->width()/columns;
@@ -630,7 +626,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
     qp.fillRect(highlightArea, QColor(0,0,0));
 
     compoundcap = "";
-    tisvalue = selectedkeymap[keyrow*columns+keycol];
+    int tisvalue = selectedkeymap[keyrow*columns+keycol];
 
     if(tisvalue > 32)
     {
@@ -707,13 +703,14 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
         inverted = action.convertToImage();
 #endif
 
+        int a, b;
         for(b = 0; b < inverted.height(); b++)
         {
           for(a = 0; a < inverted.width(); a++)
           {
             pel = inverted.pixel(a, b);
  
-            inverse = qRed(pel);
+            int inverse = qRed(pel);
             inverted.setPixel(a, b, qRgb(255-inverse, 255-inverse, 255-inverse));
           }
         }
