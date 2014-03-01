@@ -14,6 +14,8 @@
  #include <QMouseEvent>
  #include <QFontDialog>
  #include <QSettings>
+ #include <QApplication>
+ #include <QScreen>
 #else
  #include <qpainter.h>
  #include <qpixmap.h>
@@ -65,9 +67,24 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
   columns = 15;
   rows = 5;
 
+  addNULL = false;
+  highDPI = false;
+
+/*
   // Images for normal and shifted keymaps
-  thekeyboard   = new QPixmap(this->width(), this->height());
-  shiftkeyboard = new QPixmap(this->width(), this->height());
+  if(((QGuiApplication*)QCoreApplication::instance())->primaryScreen()->devicePixelRatio() >= 2)
+  {
+    highDPI = true;
+
+    thekeyboard   = new QPixmap(this->width()*2, this->height()*2);
+    shiftkeyboard = new QPixmap(this->width()*2, this->height()*2);
+  }
+  else
+*/
+  {
+    thekeyboard   = new QPixmap(this->width(), this->height());
+    shiftkeyboard = new QPixmap(this->width(), this->height());
+  }
 
   // Allocate action keys
   pbackspace_large = new QPixmap(backspace_large);
@@ -94,7 +111,7 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
 
   QSettings settings("lyndonhill.com", "TVK");
 
-  tvkFontName = settings.value("font/name", "Loma").toString();
+  tvkFontName = settings.value("font/name", "Lucida Grande").toString();
   tvkFontSize = settings.value("font/size", 16).toInt();
 #else
   QSettings settings;
@@ -145,8 +162,11 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
   else
     currentkeyboard = thekeyboard;
 
-  float keywidth  = (float)(currentkeyboard->width())/(float)(columns);
-  float keyheight = (float)(currentkeyboard->height())/(float)(rows);
+  int actual_width  = currentkeyboard->width(); // /currentkeyboard->devicePixelRatio(); // Retina TODO
+  int actual_height = currentkeyboard->height(); // /currentkeyboard->devicePixelRatio();
+
+  float keywidth  = (float)(actual_width)/(float)(columns);
+  float keyheight = (float)(actual_height)/(float)(rows);
 
   int tvk_code;
 
@@ -303,7 +323,7 @@ void ThaiVirtualKeyboard::mouseReleaseEvent(QMouseEvent *e)
     if((this->width() != keyboard->width()) || (this->height() != keyboard->height()))
     {
 #if QT_VERSION > 0x040000
-      *keyboard = keyboard->scaled(this->width(), this->height());
+      *keyboard = keyboard->scaled(this->width()*keyboard->devicePixelRatio(), this->height()*keyboard->devicePixelRatio());
 #else
       keyboard->resize(this->width(), this->height());
 #endif
@@ -333,6 +353,12 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     selectedkeymap = tvk_keymap;
   }
 
+  if(!highDPI)
+  {
+    thekeyboard->setDevicePixelRatio(1.0); // TODO for Retina
+    shiftkeyboard->setDevicePixelRatio(1.0);
+  }
+
   keyboard->fill();
  
   QPixmap *pbackspace, *ptab, *penter, *pshift, *pfont;
@@ -343,8 +369,14 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   QString compoundcap;
 
   // Get size of standard key
-  float keywidth  = (float)(keyboard->width())/(float)(columns);
-  float keyheight = (float)(keyboard->height())/(float)(rows);
+
+  int actual_width  = keyboard->width(); // /keyboard->devicePixelRatio(); // Retina TODO
+  int actual_height = keyboard->height(); // /keyboard->devicePixelRatio();
+
+  float keywidth  = (float)(actual_width)/(float)(columns);
+  float keyheight = (float)(actual_height)/(float)(rows);
+
+// std::cerr << "Key width x height = " << keywidth << "x" << keyheight << "\n";
 
   // select size of action keys
   switch(actionKeySize)
@@ -376,8 +408,8 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   }
 
   // Get size of keyboard image
-  int kbwidth = keyboard->width()-1;
-  int kbheight = keyboard->height()-1;
+  int kbwidth  = actual_width;
+  int kbheight = actual_height;
 
   QPainter *mypaint = new QPainter();
   mypaint->begin(keyboard);
@@ -389,6 +421,8 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawLine(0, 0, 0, kbheight);
   mypaint->drawLine(0, kbheight, kbwidth, kbheight);
   mypaint->drawLine(kbwidth, 0, kbwidth, kbheight);
+
+// std::cerr << "Keyboard outline = 0,0 .. " << kbwidth << "," << kbheight << "\n";
 
   // Draw rows
   mypaint->drawLine(0, keyheight, kbwidth, keyheight);
@@ -413,6 +447,8 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawLine(keywidth*14, keyheight*3, keywidth*14, keyheight*4);
   mypaint->drawLine(keywidth*4, keyheight*4, keywidth*4, kbheight);
   mypaint->drawLine(keywidth*11, keyheight*4, keywidth*11, kbheight);
+
+// std::cerr << "Columns " << keywidth*14 << "; " << keywidth*4 << "; " << keywidth*11 << "\n";
  
   // Draw keycaps
  
@@ -426,7 +462,10 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     compoundcap = "";
 
     tisvalue = selectedkeymap[a];
-    if(tisvalue > 211 && tisvalue < 219) compoundcap = QChar(0x25cc);
+    if(addNULL)
+    {
+      if(tisvalue > 211 && tisvalue < 219) compoundcap = QChar(0x25cc);
+    }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
     keycap = QChar(tisvalue);
@@ -443,7 +482,10 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     tisvalue = selectedkeymap[a+15];
 
-    if(tisvalue == 209 || (tisvalue >=  211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+    if(addNULL)
+    {
+      if(tisvalue == 209 || (tisvalue >=  211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+    }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
     keycap = QChar(tisvalue);
@@ -459,7 +501,11 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     compoundcap = "";
 
     tisvalue = selectedkeymap[a+30];
-    if(tisvalue > 230 && tisvalue < 239) compoundcap = QChar(0x25cc);
+
+    if(addNULL)
+    {
+      if(tisvalue > 230 && tisvalue < 239) compoundcap = QChar(0x25cc);
+    }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
     keycap = QChar(tisvalue);
@@ -475,7 +521,11 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     compoundcap = "";
 
     tisvalue = selectedkeymap[a+45];
-    if((tisvalue > 211 && tisvalue < 219) || (tisvalue > 230 && tisvalue < 239)) compoundcap = QChar(0x25cc);
+
+    if(addNULL)
+    {
+      if((tisvalue > 211 && tisvalue < 219) || (tisvalue > 230 && tisvalue < 239)) compoundcap = QChar(0x25cc);
+    }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
     keycap = QChar(tisvalue);
@@ -501,6 +551,13 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->fillRect(keywidth*14+1, keyheight*3+1, shiftright, keyheight+1, QColor(64,64,64));
   mypaint->fillRect(1, keyheight*4+1, keywidth*4-1, row5height, QColor(64,64,64));
   mypaint->fillRect(keywidth*11+1, keyheight*4+1, spaceright, row5height, QColor(64,64,64));
+
+/*
+std::cerr << "Unused area 1 = " << keywidth*14+1 << "," << keyheight*3+1 << ":" << shiftright << "," << keyheight+1 << "\n";
+
+std::cerr << "Unused area 2 = " << 1 << "," << keyheight*4+1 << ":" << keywidth*4-1 << "," << row5height << "\n";
+std::cerr << "Unused area 3 = " << keywidth*11+1 << "," << keyheight*4+1 << ":" << spaceright << "," << row5height << "\n";
+*/
 
 //  std::cerr << "Widget dimensions: " << this->width() << "x" << this->height() << " keys: " << keywidth << "x" << keyheight << "\n";
 
@@ -541,6 +598,12 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawPixmap((int)(keywidth*13.25-(hshift.width()/2)), (int)(keyheight*3.5-(hshift.height()/2)), hshift);
 
   mypaint->end();
+
+  if(highDPI)
+  {
+    thekeyboard->setDevicePixelRatio(2.0); // TODO for Retina
+    shiftkeyboard->setDevicePixelRatio(2.0);
+  }
 }
 
 // The keyboard was resized
@@ -554,7 +617,8 @@ void ThaiVirtualKeyboard::resizeEvent(QResizeEvent *)
     keyboard = thekeyboard;
 
 #if QT_VERSION > 0x040000
-  *keyboard = keyboard->scaled(this->width(), this->height());
+// std::cerr << "Resizing to " << this->width() << "x" << this->height() << " x" << keyboard->devicePixelRatio() << "\n";
+  *keyboard = keyboard->scaled(this->width()*keyboard->devicePixelRatio(), this->height()*keyboard->devicePixelRatio());
 #else
   keyboard->resize(this->width(), this->height());
 #endif
@@ -635,10 +699,13 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
     
       if(tisvalue > 127)
       {
-        if((tisvalue == 209) || ((tisvalue >= 211) && (tisvalue < 219)) || ((tisvalue > 230) && (tisvalue < 239)))
+        if(addNULL)
         {
-          // Add space to NSM
-          compoundcap = QChar(0x25cc);
+          if((tisvalue == 209) || ((tisvalue >= 211) && (tisvalue < 219)) || ((tisvalue > 230) && (tisvalue < 239)))
+          {
+            // Add space to NSM
+            compoundcap = QChar(0x25cc);
+          }
         }
 
         tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
@@ -743,16 +810,16 @@ void ThaiVirtualKeyboard::keyPressEvent(QKeyEvent *e)
     calculateTVKSize();
   }
 #if QT_VERSION > 0x040000
-  else if((e->key() == Qt::Key_Plus) && (e->modifiers() == Qt::ControlModifier | Qt::ShiftModifier))
+  else if((e->key() == Qt::Key_9) && (e->modifiers() == Qt::ControlModifier))
 #else
-  else if((e->key() == Qt::Key_Plus) && (e->state() == Qt::ControlButton | Qt::ShiftButton))
+  else if((e->key() == Qt::Key_Plus) && (e->state() == (Qt::ControlButton | Qt::ShiftButton)))
 #endif
   {
     tvkFontSize++;
     calculateTVKSize();
   }
 #if QT_VERSION > 0x040000
-  else if((e->key() == Qt::Key_Minus) && (e->modifiers() == Qt::ControlModifier))
+  else if((e->key() == Qt::Key_8) && (e->modifiers() == Qt::ControlModifier))
 #else
   else if((e->key() == Qt::Key_Minus) && (e->state() == Qt::ControlButton))
 #endif
@@ -781,7 +848,7 @@ void ThaiVirtualKeyboard::calculateTVKSize()
   QString testhigh;
 
   testhigh.append(QChar(0x0e44));
-  testhigh.append(QChar(0xe1b));
+  testhigh.append(QChar(0x0e1b));
   testhigh.append(QChar(0x0e26));
   testhigh.append(QChar(0x0e21));
   testhigh.append(QChar(0x0e35));
@@ -795,7 +862,10 @@ void ThaiVirtualKeyboard::calculateTVKSize()
 
   // Test several characters to find widest
   QString testam;
-  testam.append(QChar(0x25cc)).append(QChar(am));
+  if(addNULL)
+    testam.append(QChar(0x25cc));
+  testam.append(QChar(am));
+
   glyph_width  = fm.width(testwide);
   if(fm.width(QChar(nine)) > glyph_width) glyph_width = fm.width(QChar(nine));
   if(fm.width(QChar(ying)) > glyph_width) glyph_width = fm.width(QChar(ying));

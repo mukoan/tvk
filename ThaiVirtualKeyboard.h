@@ -115,6 +115,12 @@ private:
   QPixmap *penter_large, *penter_medium, *penter_small;
   QPixmap *pshift_large, *pshift_medium, *pshift_small;
   QPixmap *pfont_large, *pfont_medium, *pfont_small;
+
+  /// Add a spacing character for NSM
+  bool addNULL;
+
+  /// True if Retina
+  bool highDPI;
 };
 
 #endif // ThaiVirtualKeyboard_h
