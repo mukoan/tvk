@@ -443,7 +443,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     tisvalue = selectedkeymap[a+15];
 
-    if(tisvalue == 209 || (tisvalue >=  211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+    if(tisvalue == 209 || (tisvalue > 211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
     keycap = QChar(tisvalue);
