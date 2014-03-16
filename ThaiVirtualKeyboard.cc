@@ -16,6 +16,9 @@
  #include <QSettings>
  #include <QApplication>
  #include <QScreen>
+ #include <QFontDatabase>
+ #include <QFont>
+ #include <QList>
 #else
  #include <qpainter.h>
  #include <qpixmap.h>
@@ -67,7 +70,6 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
   columns = 15;
   rows = 5;
 
-  addNULL = false;
   highDPI = false;
 
 /*
@@ -123,6 +125,18 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
 
   previousFontName = tvkFontName;
   previousFontSize = tvkFontSize;
+
+#ifdef _WIN32
+  addNULL = true;
+#elif __APPLE__
+  if(backupFontRenderer(tvkFontName))
+    addNULL = false;
+  else
+    addNULL = true;
+#else
+  // Linux always add circles; Mac is conditional
+  addNULL = true;
+#endif
 
   // Get the size of the widget
   calculateTVKSize();
@@ -307,6 +321,13 @@ void ThaiVirtualKeyboard::mouseReleaseEvent(QMouseEvent *e)
       tvkFontName = font.family();
       tvkFontSize = font.pointSize();
       calculateTVKSize();
+
+#if __APPLE__
+      if(backupFontRenderer(tvkFontName))
+        addNULL = false;
+      else
+        addNULL = true;
+#endif
 
       drawKeyboard(true);
       drawKeyboard(false);
@@ -907,3 +928,22 @@ void ThaiVirtualKeyboard::calculateTVKSize()
   if((this->pos().x() < 0) || (this->pos().y() < 0))
     this->move(0,0);
 }
+
+// Return true if font family doesn't support Thai
+bool ThaiVirtualKeyboard::backupFontRenderer(const QString &family) const
+{
+#if QT_VERSION > 0x040000
+  QFontDatabase qdb;
+  QList<QFontDatabase::WritingSystem> sys = qdb.writingSystems(family);
+
+  QListIterator<QFontDatabase::WritingSystem> it(sys);
+  while(it.hasNext())
+  {
+    if(it.next() == QFontDatabase::Thai)
+      return(false);
+  }
+#endif
+
+  return(true);
+}
+

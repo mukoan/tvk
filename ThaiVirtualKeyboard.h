@@ -65,6 +65,9 @@ private:
   /// Calculate the minimum size of TVK, based on the current font size
   void calculateTVKSize();
 
+  /// Return true if font family doesn't support Thai
+  bool backupFontRenderer(const QString &family) const;
+
   /// Width of widget, in keys
   int columns;
 
