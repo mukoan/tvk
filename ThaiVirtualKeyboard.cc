@@ -505,7 +505,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     if(addNULL)
     {
-      if(tisvalue == 209 || (tisvalue > 211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+      if(tisvalue == 209 || (tisvalue >= 211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
     }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
@@ -828,6 +828,14 @@ void ThaiVirtualKeyboard::keyPressEvent(QKeyEvent *e)
   {
     tvkFontName = previousFontName;
     tvkFontSize = previousFontSize;
+
+#if __APPLE__
+  if(backupFontRenderer(tvkFontName))
+    addNULL = false;
+  else
+    addNULL = true;
+#endif
+
     calculateTVKSize();
   }
 #if QT_VERSION > 0x040000
@@ -940,10 +948,14 @@ bool ThaiVirtualKeyboard::backupFontRenderer(const QString &family) const
   while(it.hasNext())
   {
     if(it.next() == QFontDatabase::Thai)
+    {
+      std::cerr << "Font " << family.toStdString() << " has Thai glyphs\n";
       return(false);
+    }
   }
 #endif
 
+  std::cerr << "Font " << family.toStdString() << " does not have Thai glyphs\n";
   return(true);
 }
 
