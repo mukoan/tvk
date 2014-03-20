@@ -374,11 +374,14 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     selectedkeymap = tvk_keymap;
   }
 
+/*
+  // TODO for Retina
   if(!highDPI)
   {
-    thekeyboard->setDevicePixelRatio(1.0); // TODO for Retina
+    thekeyboard->setDevicePixelRatio(1.0);
     shiftkeyboard->setDevicePixelRatio(1.0);
   }
+*/
 
   keyboard->fill();
  
@@ -505,7 +508,13 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     if(addNULL)
     {
+#ifdef __linux
+      // Nasty hack for SARA AM (211). Should not need this ifdef but Linux font renderer always
+      // adds 0x25cc to SARA AM.
+      if(tisvalue == 209 || (tisvalue > 211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+#else
       if(tisvalue == 209 || (tisvalue >= 211 && tisvalue < 219) || (tisvalue == 234) || (tisvalue == 237)) compoundcap = QChar(0x25cc);
+#endif
     }
 
     if(tisvalue > 127) tisvalue = tisvalue - 0xa0 + 0xe00; // convert to Unicode
@@ -620,11 +629,14 @@ std::cerr << "Unused area 3 = " << keywidth*11+1 << "," << keyheight*4+1 << ":" 
 
   mypaint->end();
 
+/*
+  // TODO for Retina
   if(highDPI)
   {
-    thekeyboard->setDevicePixelRatio(2.0); // TODO for Retina
+    thekeyboard->setDevicePixelRatio(2.0);
     shiftkeyboard->setDevicePixelRatio(2.0);
   }
+*/
 }
 
 // The keyboard was resized
@@ -679,7 +691,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
   keywidth  = this->width()/columns;
   keyheight = this->height()/rows;
 
-  if((keywidth > 36) && (keyheight > 36))
+  if(actionKeySize == 2)
   {
     backspace = pbackspace_large;
     tab = ptab_large;
@@ -687,7 +699,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
     shift = pshift_large;
     font = pfont_large;
   }
-  else if((keywidth > 20) && (keyheight > 20))
+  else if(actionKeySize == 1)
   {
     backspace = pbackspace_medium;
     tab = ptab_medium;
@@ -949,13 +961,13 @@ bool ThaiVirtualKeyboard::backupFontRenderer(const QString &family) const
   {
     if(it.next() == QFontDatabase::Thai)
     {
-      std::cerr << "Font " << family.toStdString() << " has Thai glyphs\n";
+      // std::cerr << "Font " << family.toStdString() << " has Thai glyphs\n";
       return(false);
     }
   }
 #endif
 
-  std::cerr << "Font " << family.toStdString() << " does not have Thai glyphs\n";
+  // std::cerr << "Font " << family.toStdString() << " does not have Thai glyphs\n";
   return(true);
 }
 
