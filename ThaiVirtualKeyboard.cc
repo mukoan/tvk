@@ -878,14 +878,14 @@ void ThaiVirtualKeyboard::calculateTVKSize()
   int border = 2;
   int glyph_width, glyph_height;
   int min_width, min_height;
-  int khomut = 0x0e5b;
-  int nine = 0x0e59;
-  int ying = 0x0e0d;
-  int jula = 0x0e2c;
-  int am = 0x0e33;
+  int khomut   = 0x0e5b;
+  int nine     = 0x0e59;
+  int ying     = 0x0e0d;
+  int jula     = 0x0e2c;
+  int am       = 0x0e33;
   int maimalai = 0x0e44;
 
-  QChar testwide = khomut;
+  QChar testwide = QChar(khomut);
   QString testhigh;
 
   testhigh.append(QChar(0x0e44));
@@ -907,12 +907,22 @@ void ThaiVirtualKeyboard::calculateTVKSize()
     testam.append(QChar(0x25cc));
   testam.append(QChar(am));
 
-  glyph_width  = fm.width(testwide);
-  if(fm.width(QChar(nine)) > glyph_width) glyph_width = fm.width(QChar(nine));
-  if(fm.width(QChar(ying)) > glyph_width) glyph_width = fm.width(QChar(ying));
-  if(fm.width(QChar(jula)) > glyph_width) glyph_width = fm.width(QChar(jula));
-  if(fm.width(testam) > glyph_width) glyph_width = fm.width(testam);
-  if(fm.width(QChar(maimalai)) > glyph_width) glyph_width = fm.width(QChar(maimalai));
+  glyph_width  = fm.boundingRect(testwide).width();
+
+  int test_glyph_width = fm.boundingRect(QChar(nine)).width();
+  if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
+
+  test_glyph_width = fm.boundingRect(QChar(ying)).width();
+  if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
+
+  test_glyph_width = fm.boundingRect(QChar(jula)).width();
+  if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
+
+  test_glyph_width = fm.boundingRect(testam).width();
+  if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
+
+  test_glyph_width = fm.boundingRect(QChar(maimalai)).width();
+  if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
 
 /*
   std::cerr << "am left bearing = " << fm.leftBearing(QChar(am)) << "\n";
