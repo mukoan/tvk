@@ -3,6 +3,21 @@
  * @brief  Thai Virtual Keyboard Widget
  * @author Lyndon Hill
  * @date   2004.06.01 Incept
+ *
+    Copyright (C) 2023 Lyndon Hill
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */ 
  
 #include "ThaiVirtualKeyboard.h" 
@@ -108,33 +123,27 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
   shifted = false;
   keydown = false;
 
-#if QT_VERSION > 0x040000
   setFocusPolicy(Qt::StrongFocus);
 
   QSettings settings("lyndonhill.com", "TVK");
 
-  tvkFontName = settings.value("font/name", "Lucida Grande").toString();
-  tvkFontSize = settings.value("font/size", 16).toInt();
-#else
-  QSettings settings;
-  settings.setPath("lyndonhill.com", "TVK");
-
-  tvkFontName = settings.readEntry("/font/name", "Loma");
-  tvkFontSize = settings.readNumEntry("/font/size", 16);
-#endif
+  tvkFontName = settings.value("font/name", "Arial").toString();
+  tvkFontSize = settings.value("font/size", 24).toInt();
 
   previousFontName = tvkFontName;
   previousFontSize = tvkFontSize;
 
+  // Add dotted circle for NSM
 #ifdef _WIN32
   addNULL = true;
 #elif __APPLE__
+  // Mac sometimes adds them, e.g. Lucida Grande, Rockwell, Thonburi, Verdana
   if(backupFontRenderer(tvkFontName))
     addNULL = false;
   else
     addNULL = true;
 #else
-  // Linux always add circles; Mac is conditional
+  // Linux always add
   addNULL = true;
 #endif
 
@@ -150,16 +159,9 @@ void ThaiVirtualKeyboard::closeEvent(QCloseEvent *e)
 {
   // Write font settings
 
-#if QT_VERSION > 0x040000
   QSettings settings("lyndonhill.com", "TVK"); 
   settings.setValue("font/name", tvkFontName);
   settings.setValue("font/size", tvkFontSize);
-#else
-  QSettings settings;
-  settings.setPath("lyndonhill.com", "TVK");
-  settings.writeEntry("/font/name", tvkFontName);
-  settings.writeEntry("/font/size", tvkFontSize);
-#endif
 
   e->accept();
 }
@@ -176,8 +178,8 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
   else
     currentkeyboard = thekeyboard;
 
-  int actual_width  = currentkeyboard->width(); // /currentkeyboard->devicePixelRatio(); // Retina TODO
-  int actual_height = currentkeyboard->height(); // /currentkeyboard->devicePixelRatio();
+  int actual_width  = currentkeyboard->width();
+  int actual_height = currentkeyboard->height();
 
   float keywidth  = (float)(actual_width)/(float)(columns);
   float keyheight = (float)(actual_height)/(float)(rows);
@@ -374,15 +376,6 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     selectedkeymap = tvk_keymap;
   }
 
-/*
-  // TODO for Retina
-  if(!highDPI)
-  {
-    thekeyboard->setDevicePixelRatio(1.0);
-    shiftkeyboard->setDevicePixelRatio(1.0);
-  }
-*/
-
   keyboard->fill();
  
   QPixmap *pbackspace, *ptab, *penter, *pshift, *pfont;
@@ -394,13 +387,11 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
   // Get size of standard key
 
-  int actual_width  = keyboard->width(); // /keyboard->devicePixelRatio(); // Retina TODO
-  int actual_height = keyboard->height(); // /keyboard->devicePixelRatio();
+  int actual_width  = keyboard->width();
+  int actual_height = keyboard->height();
 
   float keywidth  = (float)(actual_width)/(float)(columns);
   float keyheight = (float)(actual_height)/(float)(rows);
-
-// std::cerr << "Key width x height = " << keywidth << "x" << keyheight << "\n";
 
   // select size of action keys
   switch(actionKeySize)
@@ -446,8 +437,6 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawLine(0, kbheight, kbwidth, kbheight);
   mypaint->drawLine(kbwidth, 0, kbwidth, kbheight);
 
-// std::cerr << "Keyboard outline = 0,0 .. " << kbwidth << "," << kbheight << "\n";
-
   // Draw rows
   mypaint->drawLine(0, keyheight, kbwidth, keyheight);
   mypaint->drawLine(0, keyheight*2, (int)(keywidth*13.5), keyheight*2);
@@ -472,8 +461,6 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawLine(keywidth*4, keyheight*4, keywidth*4, kbheight);
   mypaint->drawLine(keywidth*11, keyheight*4, keywidth*11, kbheight);
 
-// std::cerr << "Columns " << keywidth*14 << "; " << keywidth*4 << "; " << keywidth*11 << "\n";
- 
   // Draw keycaps
  
   b = keyheight/2; // middle of first row
