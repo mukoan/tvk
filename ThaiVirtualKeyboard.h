@@ -4,7 +4,7 @@
  * @author Lyndon Hill
  * @date   2004.06.01 Incept
  *
-    Copyright (C) 2023 Lyndon Hill
+    Copyright (C) 2004 Lyndon Hill
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,21 +19,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */ 
-  
+
 #ifndef ThaiVirtualKeyboard_h
 #define ThaiVirtualKeyboard_h
 
-#if QT_VERSION > 0x040000
- #include <QWidget>
- #include <QLabel>
- #include <QPixmap>
- #include <QRect>
-#else
- #include <qwidget.h>
- #include <qlabel.h>
- #include <qpixmap.h>
- #include <qrect.h>
-#endif
+#include <QWidget>
+#include <QLabel>
+#include <QPixmap>
+#include <QRect>
 
 /// @class Thai Virtual Keyboard (TVK)
 class ThaiVirtualKeyboard : public QLabel
@@ -128,14 +121,14 @@ private:
   int previousFontSize;
 
   // Action keys
-  QPixmap *pbackspace_large, *pbackspace_medium, *pbackspace_small;
-  QPixmap *ptab_large, *ptab_medium, *ptab_small;
-  QPixmap *penter_large, *penter_medium, *penter_small;
-  QPixmap *pshift_large, *pshift_medium, *pshift_small;
-  QPixmap *pfont_large, *pfont_medium, *pfont_small;
+  QPixmap *pix_backspace_large, *pix_backspace_medium, *pix_backspace_small;
+  QPixmap *pix_tab_large,   *pix_tab_medium,   *pix_tab_small;
+  QPixmap *pix_enter_large, *pix_enter_medium, *pix_enter_small;
+  QPixmap *pix_shift_large, *pix_shift_medium, *pix_shift_small;
+  QPixmap *pix_font_large,  *pix_font_medium,  *pix_font_small;
 
   /// Add a spacing character for NSM
-  bool addNULL;
+  bool addSpaceNSM;
 
   /// True if Retina
   bool highDPI;

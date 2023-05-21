@@ -4,7 +4,7 @@
  * @author Lyndon Hill
  * @date   2004.06.01 Incept
  *
-    Copyright (C) 2023 Lyndon Hill
+    Copyright (C) 2004 Lyndon Hill
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,27 +22,18 @@
  
 #include "ThaiVirtualKeyboard.h" 
 
-#if QT_VERSION > 0x040000
- #include <QPainter>
- #include <QPixmap>
- #include <QImage>
- #include <QMouseEvent>
- #include <QFontDialog>
- #include <QSettings>
- #include <QApplication>
- #include <QScreen>
- #include <QFontDatabase>
- #include <QFont>
- #include <QList>
-#else
- #include <qpainter.h>
- #include <qpixmap.h>
- #include <qimage.h>
- #include <qfontdialog.h>
- #include <qsettings.h>
-#endif
+#include <QPainter>
+#include <QPixmap>
+#include <QImage>
+#include <QMouseEvent>
+#include <QFontDialog>
+#include <QSettings>
+#include <QApplication>
+#include <QScreen>
+#include <QFontDatabase>
+#include <QFont>
+#include <QList>
 
-#include <iostream>
 #include <math.h>
 
 #include "Multisize/enter_large.xpm"
@@ -75,8 +66,6 @@ int tvk_shifted_keymap[75] = {
     1, 165,  40,  41, 169, 206, 218, 236,  63, 178, 204, 198,   2,  2,  0,
    32,  32,  32,  32,  32,  32,  32,  32,  32,  32,  32,  32,  32, 32, 32 };
   
-// using namespace std;
-
 ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
 {
   actionKeySize = 0;  // temporary initialisation value
@@ -104,21 +93,21 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
   }
 
   // Allocate action keys
-  pbackspace_large = new QPixmap(backspace_large);
-  pbackspace_medium = new QPixmap(backspace_medium);
-  pbackspace_small = new QPixmap(backspace_small);
-  ptab_large = new QPixmap(tab_large);
-  ptab_medium = new QPixmap(tab_medium);
-  ptab_small = new QPixmap(tab_small);
-  penter_large = new QPixmap(enter_large);
-  penter_medium = new QPixmap(enter_medium);
-  penter_small = new QPixmap(enter_small);
-  pshift_large = new QPixmap(shift_large);
-  pshift_medium = new QPixmap(shift_medium);
-  pshift_small = new QPixmap(shift_small);
-  pfont_large = new QPixmap(font_large);
-  pfont_medium = new QPixmap(font_medium);
-  pfont_small = new QPixmap(font_small);
+  pix_backspace_large  = new QPixmap(backspace_large);
+  pix_backspace_medium = new QPixmap(backspace_medium);
+  pix_backspace_small  = new QPixmap(backspace_small);
+  pix_tab_large        = new QPixmap(tab_large);
+  pix_tab_medium       = new QPixmap(tab_medium);
+  pix_tab_small        = new QPixmap(tab_small);
+  pix_enter_large      = new QPixmap(enter_large);
+  pix_enter_medium     = new QPixmap(enter_medium);
+  pix_enter_small      = new QPixmap(enter_small);
+  pix_shift_large      = new QPixmap(shift_large);
+  pix_shift_medium     = new QPixmap(shift_medium);
+  pix_shift_small      = new QPixmap(shift_small);
+  pix_font_large       = new QPixmap(font_large);
+  pix_font_medium      = new QPixmap(font_medium);
+  pix_font_small       = new QPixmap(font_small);
 
   shifted = false;
   keydown = false;
@@ -135,16 +124,16 @@ ThaiVirtualKeyboard::ThaiVirtualKeyboard(QWidget *parent) : QLabel(parent)
 
   // Add dotted circle for NSM
 #ifdef _WIN32
-  addNULL = true;
+  addSpaceNSM = true;
 #elif __APPLE__
   // Mac sometimes adds them, e.g. Lucida Grande, Rockwell, Thonburi, Verdana
   if(backupFontRenderer(tvkFontName))
-    addNULL = false;
+    addSpaceNSM = false;
   else
-    addNULL = true;
+    addSpaceNSM = true;
 #else
   // Linux always add
-  addNULL = true;
+  addSpaceNSM = true;
 #endif
 
   // Get the size of the widget
@@ -203,68 +192,66 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
     if(press_column >= 13)
     {
       press_column = 13; // delete
-      highlightArea.setCoords(1+press_column*keywidth, 1, currentkeyboard->width(), keyheight); 
+      highlightArea.setCoords(1+press_column*keywidth, 1, currentkeyboard->width(), keyheight);
     }
     else
-      highlightArea.setCoords(1+press_column*keywidth, 1, (press_column+1)*keywidth, keyheight); 
+      highlightArea.setCoords(1+press_column*keywidth, 1, (press_column+1)*keywidth, keyheight);
     break;
-    
+
     case 1:
     press_column = 0;
-    press_column += (keypos.x() - (int)(keywidth*0.5)) / keywidth; 
+    press_column += (keypos.x() - (int)(keywidth*0.5)) / keywidth;
     if(press_column == 0)
     {
       // tab key
-      highlightArea.setCoords(1, keyheight, (int)(keywidth*1.5), keyheight*2); 
+      highlightArea.setCoords(1, keyheight, (int)(keywidth*1.5), keyheight*2);
     }
     else if(press_column >= 13)
     {
       press_column = 13; // enter
-      highlightArea.setCoords((int)(keywidth*13.5)+1, keyheight+1, currentkeyboard->width(), keyheight*2+1); 
-//      highlightArea.setCoords(keywidth*13+1, keyheight*2+1, thekeyboard->width(), keyheight*3); 
+      highlightArea.setCoords((int)(keywidth*13.5)+1, keyheight+1, currentkeyboard->width(), keyheight*2+1);
     }
     else
-      highlightArea.setCoords((int)(1+((press_column+0.5)*keywidth)), keyheight+1, (int)((press_column+1.5)*keywidth), keyheight*2); 
+      highlightArea.setCoords((int)(1+((press_column+0.5)*keywidth)), keyheight+1, (int)((press_column+1.5)*keywidth), keyheight*2);
     break;
 
     case 2:
     if(keypos.x() >= keywidth)
     {
-      press_column = keypos.x() / keywidth; 
+      press_column = keypos.x() / keywidth;
       if(press_column >= 13)
       {
         press_column = 13; // enter
-        highlightArea.setCoords((int)(keywidth*13.5)+1, keyheight+1, currentkeyboard->width(), keyheight*2+1); 
-//        highlightArea.setCoords(keywidth*13+1, keyheight*2+1, thekeyboard->width(), keyheight*3); 
+        highlightArea.setCoords((int)(keywidth*13.5)+1, keyheight+1, currentkeyboard->width(), keyheight*2+1);
       }
       else
-        highlightArea.setCoords(keywidth*press_column+1, keyheight*2+1, keywidth*(press_column+1)+1, keyheight*3); 
+        highlightArea.setCoords(keywidth*press_column+1, keyheight*2+1, keywidth*(press_column+1)+1, keyheight*3);
     }
     else
     {
       press_column = 0;
-      highlightArea.setCoords(1, keyheight*2+1, keywidth-1, keyheight*3-1); // font  
+      highlightArea.setCoords(1, keyheight*2+1, keywidth-1, keyheight*3-1); // font
     }
     break;
-  
+
     case 3:
     if(keypos.x() < keywidth*14)
     {
       press_column = 0;
-      press_column += (keypos.x() - (int)(keywidth*0.5)) / keywidth; 
+      press_column += (keypos.x() - (int)(keywidth*0.5)) / keywidth;
       if(press_column == 0)
       {
         // left shift
-        highlightArea.setCoords(1, keyheight*3+1, (int)(1.5*keywidth), keyheight*4); 
+        highlightArea.setCoords(1, keyheight*3+1, (int)(1.5*keywidth), keyheight*4);
       }
-      else if(press_column >= 12) 
+      else if(press_column >= 12)
       {
         press_column = 12; // right shift
-        highlightArea.setCoords(1+(int)(12.5*keywidth), keyheight*3+1, 14*keywidth, keyheight*4); 
+        highlightArea.setCoords(1+(int)(12.5*keywidth), keyheight*3+1, 14*keywidth, keyheight*4);
       }
       else
       {
-        highlightArea.setCoords((int)(1+((press_column+0.5)*keywidth)), keyheight*3+1, (int)((press_column+1.5)*keywidth), keyheight*4); 
+        highlightArea.setCoords((int)(1+((press_column+0.5)*keywidth)), keyheight*3+1, (int)((press_column+1.5)*keywidth), keyheight*4);
       }
     }
     break;
@@ -286,7 +273,7 @@ void ThaiVirtualKeyboard::mousePressEvent(QMouseEvent *e)
   if((press_row == -1) || (press_column == -1))
     return;
 
-  tvk_code = shifted == false ? tvk_keymap[press_row*columns+press_column] : 
+  tvk_code = shifted == false ? tvk_keymap[press_row*columns+press_column] :
                                tvk_shifted_keymap[press_row*columns+press_column];
 
   if(tvk_code > 3)
@@ -326,9 +313,9 @@ void ThaiVirtualKeyboard::mouseReleaseEvent(QMouseEvent *e)
 
 #if __APPLE__
       if(backupFontRenderer(tvkFontName))
-        addNULL = false;
+        addSpaceNSM = false;
       else
-        addNULL = true;
+        addSpaceNSM = true;
 #endif
 
       drawKeyboard(true);
@@ -345,11 +332,7 @@ void ThaiVirtualKeyboard::mouseReleaseEvent(QMouseEvent *e)
     // Redraw keyboard if size changed since last time it was drawn
     if((this->width() != keyboard->width()) || (this->height() != keyboard->height()))
     {
-#if QT_VERSION > 0x040000
       *keyboard = keyboard->scaled(this->width()*keyboard->devicePixelRatio(), this->height()*keyboard->devicePixelRatio());
-#else
-      keyboard->resize(this->width(), this->height());
-#endif
 
       drawKeyboard(shifted);
     }
@@ -378,7 +361,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
   keyboard->fill();
  
-  QPixmap *pbackspace, *ptab, *penter, *pshift, *pfont;
+  QPixmap *pix_backspace, *pix_tab, *pix_enter, *pix_shift, *pix_font;
  
   int a, b;
   int tisvalue;
@@ -397,28 +380,28 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   switch(actionKeySize)
   {
     case 0:
-    pbackspace = pbackspace_small;
-    ptab = ptab_small;
-    penter = penter_small;
-    pshift = pshift_small;
-    pfont = pfont_small;
+    pix_backspace = pix_backspace_small;
+    pix_tab       = pix_tab_small;
+    pix_enter     = pix_enter_small;
+    pix_shift     = pix_shift_small;
+    pix_font      = pix_font_small;
     break;
 
     default:
     case 1:
-    pbackspace = pbackspace_medium;
-    ptab = ptab_medium;
-    penter = penter_medium;
-    pshift = pshift_medium;
-    pfont = pfont_medium;
+    pix_backspace = pix_backspace_medium;
+    pix_tab       = pix_tab_medium;
+    pix_enter     = pix_enter_medium;
+    pix_shift     = pix_shift_medium;
+    pix_font      = pix_font_medium;
     break;
 
     case 2:
-    pbackspace = pbackspace_large;
-    ptab = ptab_large;
-    penter = penter_large;
-    pshift = pshift_large;
-    pfont = pfont_large;
+    pix_backspace = pix_backspace_large;
+    pix_tab       = pix_tab_large;
+    pix_enter     = pix_enter_large;
+    pix_shift     = pix_shift_large;
+    pix_font      = pix_font_large;
     break;
   }
 
@@ -447,7 +430,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
   for(a = 0; a < 14; a++)
     mypaint->drawLine(a*keywidth, 0, a*keywidth, keyheight);
-  
+
   for(a = 0; a < 13; a++)
     mypaint->drawLine((int)((a+1.5)*keywidth), keyheight, (int)((a+1.5)*keywidth), keyheight*2);
 
@@ -462,7 +445,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->drawLine(keywidth*11, keyheight*4, keywidth*11, kbheight);
 
   // Draw keycaps
- 
+
   b = keyheight/2; // middle of first row
 
   QRect boundingbox;
@@ -473,7 +456,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
     compoundcap = "";
 
     tisvalue = selectedkeymap[a];
-    if(addNULL)
+    if(addSpaceNSM)
     {
       if(tisvalue > 211 && tisvalue < 219) compoundcap = QChar(0x25cc);
     }
@@ -493,7 +476,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     tisvalue = selectedkeymap[a+15];
 
-    if(addNULL)
+    if(addSpaceNSM)
     {
 #ifdef __linux
       // Nasty hack for SARA AM (211). Should not need this ifdef but Linux font renderer always
@@ -519,7 +502,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     tisvalue = selectedkeymap[a+30];
 
-    if(addNULL)
+    if(addSpaceNSM)
     {
       if(tisvalue > 230 && tisvalue < 239) compoundcap = QChar(0x25cc);
     }
@@ -539,7 +522,7 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
 
     tisvalue = selectedkeymap[a+45];
 
-    if(addNULL)
+    if(addSpaceNSM)
     {
       if((tisvalue > 211 && tisvalue < 219) || (tisvalue > 230 && tisvalue < 239)) compoundcap = QChar(0x25cc);
     }
@@ -552,15 +535,12 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   }
 
   // Draw action keys
-  mypaint->drawPixmap((int)(keywidth*14-(pbackspace->width()/2)), (int)(keyheight*0.5-(pbackspace->height()/2)), *pbackspace);
-  mypaint->drawPixmap((int)(keywidth*0.75-(ptab->width()/2)), (int)(keyheight*1.5-(ptab->height()/2)), *ptab);
-  mypaint->drawPixmap((int)(keywidth*14.25-(penter->width()/2)), (int)(keyheight*2-(penter->height()/2)), *penter);
-  mypaint->drawPixmap((int)(keywidth*0.5-(pfont->width()/2)), (int)(keyheight*2.5-(pfont->height()/2)), *pfont);
-//  mypaint->drawPixmap((int)(keywidth*0.75-(QPixmap(shift).width()/2)), (int)(keyheight*3.5-(QPixmap(shift).height()/2)), QPixmap(shift));
-//  mypaint->drawPixmap((int)(keywidth*13.25-(QPixmap(shift).width()/2)), (int)(keyheight*3.5-(QPixmap(shift).height()/2)), QPixmap(shift));
+  mypaint->drawPixmap((int)(keywidth*14-(pix_backspace->width()/2)), (int)(keyheight*0.5-(pix_backspace->height()/2)), *pix_backspace);
+  mypaint->drawPixmap((int)(keywidth*0.75-(pix_tab->width()/2)), (int)(keyheight*1.5-(pix_tab->height()/2)), *pix_tab);
+  mypaint->drawPixmap((int)(keywidth*14.25-(pix_enter->width()/2)), (int)(keyheight*2-(pix_enter->height()/2)), *pix_enter);
+  mypaint->drawPixmap((int)(keywidth*0.5-(pix_font->width()/2)), (int)(keyheight*2.5-(pix_font->height()/2)), *pix_font);
 
   // Fill in unused areas
-  // mypaint->fillRect(1, keyheight*2+1, keywidth*1-1, keyheight-1, QColor(64,64,64));
   int row5height = kbheight-1 - (int)(keyheight*4);
   int spaceright = kbwidth-1 - (int)(keywidth*11);
   int shiftright = kbwidth-1 - (int)(keywidth*14);
@@ -569,33 +549,20 @@ void ThaiVirtualKeyboard::drawKeyboard(bool shiftengage)
   mypaint->fillRect(1, keyheight*4+1, keywidth*4-1, row5height, QColor(64,64,64));
   mypaint->fillRect(keywidth*11+1, keyheight*4+1, spaceright, row5height, QColor(64,64,64));
 
-/*
-std::cerr << "Unused area 1 = " << keywidth*14+1 << "," << keyheight*3+1 << ":" << shiftright << "," << keyheight+1 << "\n";
-
-std::cerr << "Unused area 2 = " << 1 << "," << keyheight*4+1 << ":" << keywidth*4-1 << "," << row5height << "\n";
-std::cerr << "Unused area 3 = " << keywidth*11+1 << "," << keyheight*4+1 << ":" << spaceright << "," << row5height << "\n";
-*/
-
-//  std::cerr << "Widget dimensions: " << this->width() << "x" << this->height() << " keys: " << keywidth << "x" << keyheight << "\n";
-
   // Highlight shift keys
-  QPixmap hshift = *pshift;
+  QPixmap hshift = *pix_shift;
   QRgb pel;
 
   if(shiftengage == true)
   {
-#if QT_VERSION > 0x040000
     QImage inverted = hshift.toImage();
-#else
-    QImage inverted = hshift.convertToImage();
-#endif
 
     for(b = 0; b < inverted.height(); b++)
     {
       for(a = 0; a < inverted.width(); a++)
       {
         pel = inverted.pixel(a, b);
- 
+
         int inverse = qRed(pel);
         inverted.setPixel(a, b, qRgb(255-inverse, 255-inverse, 255-inverse));
       }
@@ -604,11 +571,7 @@ std::cerr << "Unused area 3 = " << keywidth*11+1 << "," << keyheight*4+1 << ":" 
     mypaint->fillRect(1, keyheight*3+1, keywidth*1.5, keyheight, QColor(0,0,0));
     mypaint->fillRect(keywidth*12.5+1, keyheight*3+1, keywidth*1.5, keyheight, QColor(0,0,0));
 
-#if QT_VERSION > 0x040000
     hshift = QPixmap::fromImage(inverted);
-#else
-    hshift.convertFromImage(inverted);
-#endif
   }
 
   mypaint->drawPixmap((int)(keywidth*0.75-(hshift.width()/2)), (int)(keyheight*3.5-(hshift.height()/2)), hshift);
@@ -636,12 +599,7 @@ void ThaiVirtualKeyboard::resizeEvent(QResizeEvent *)
   else
     keyboard = thekeyboard;
 
-#if QT_VERSION > 0x040000
-// std::cerr << "Resizing to " << this->width() << "x" << this->height() << " x" << keyboard->devicePixelRatio() << "\n";
   *keyboard = keyboard->scaled(this->width()*keyboard->devicePixelRatio(), this->height()*keyboard->devicePixelRatio());
-#else
-  keyboard->resize(this->width(), this->height());
-#endif
 
   drawKeyboard(shifted);
 
@@ -662,45 +620,46 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
       qp.drawPixmap(0, 0, *thekeyboard);
   }
 
-  // Paint highlighted keys 
+  // Paint highlighted keys
   int *selectedkeymap;
   selectedkeymap = (shifted == true) ? tvk_shifted_keymap : tvk_keymap;
 
   QString compoundcap;
   QChar keycap;
 
-  int keywidth, keyheight;
-  QImage inverted; 
+  QImage inverted;
   QPixmap action, *shift, *tab, *backspace, *enter, *font;
   QRgb pel;
   int px, py;
 
-  keywidth  = this->width()/columns;
-  keyheight = this->height()/rows;
+/*
+  int keywidth  = this->width()/columns;
+  int keyheight = this->height()/rows;
+*/
 
   if(actionKeySize == 2)
   {
-    backspace = pbackspace_large;
-    tab = ptab_large;
-    enter = penter_large;
-    shift = pshift_large;
-    font = pfont_large;
+    backspace = pix_backspace_large;
+    tab       = pix_tab_large;
+    enter     = pix_enter_large;
+    shift     = pix_shift_large;
+    font      = pix_font_large;
   }
   else if(actionKeySize == 1)
   {
-    backspace = pbackspace_medium;
-    tab = ptab_medium;
-    enter = penter_medium;
-    shift = pshift_medium;
-    font = pfont_medium;
+    backspace = pix_backspace_medium;
+    tab       = pix_tab_medium;
+    enter     = pix_enter_medium;
+    shift     = pix_shift_medium;
+    font      = pix_font_medium;
   }
   else
   {
-    backspace = pbackspace_small;
-    tab = ptab_small;
-    enter = penter_small;
-    shift = pshift_small;
-    font = pfont_small;
+    backspace = pix_backspace_small;
+    tab       = pix_tab_small;
+    enter     = pix_enter_small;
+    shift     = pix_shift_small;
+    font      = pix_font_small;
   }
 
   px = 0; py = 0;
@@ -716,10 +675,10 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
     {
       qp.setPen(QColor(255,255,255));
       qp.setFont(QFont(tvkFontName, tvkFontSize));
-    
+
       if(tisvalue > 127)
       {
-        if(addNULL)
+        if(addSpaceNSM)
         {
           if((tisvalue == 209) || ((tisvalue >= 211) && (tisvalue < 219)) || ((tisvalue > 230) && (tisvalue < 239)))
           {
@@ -775,7 +734,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
         break;
 
         case 10: // enter
-        qp.fillRect((this->width()*(13.0/columns))+1, this->height()*(2.0/rows)+1, this->width(), this->height()/rows, QColor(0,0,0)); 
+        qp.fillRect((this->width()*(13.0/columns))+1, this->height()*(2.0/rows)+1, this->width(), this->height()/rows, QColor(0,0,0));
         action = *enter;
         px = highlightArea.x() + highlightArea.width()/2 - action.width()/2;
         py = highlightArea.y() + highlightArea.height() - action.height()/2;
@@ -784,11 +743,7 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
 
       if((tisvalue < 32) && (tisvalue > 0))
       {
-#if QT_VERSION > 0x040000
         inverted = action.toImage();
-#else
-        inverted = action.convertToImage();
-#endif
 
         int a, b;
         for(b = 0; b < inverted.height(); b++)
@@ -796,17 +751,13 @@ void ThaiVirtualKeyboard::paintEvent(QPaintEvent *p)
           for(a = 0; a < inverted.width(); a++)
           {
             pel = inverted.pixel(a, b);
- 
+
             int inverse = qRed(pel);
             inverted.setPixel(a, b, qRgb(255-inverse, 255-inverse, 255-inverse));
           }
         }
-  
-#if QT_VERSION > 0x040000
+
         action = QPixmap::fromImage(inverted);
-#else
-        action.convertFromImage(inverted);
-#endif
 
         qp.drawPixmap(px-1, py-1, action);
       }
@@ -830,27 +781,19 @@ void ThaiVirtualKeyboard::keyPressEvent(QKeyEvent *e)
 
 #if __APPLE__
   if(backupFontRenderer(tvkFontName))
-    addNULL = false;
+    addSpaceNSM = false;
   else
-    addNULL = true;
+    addSpaceNSM = true;
 #endif
 
     calculateTVKSize();
   }
-#if QT_VERSION > 0x040000
   else if((e->key() == Qt::Key_9) && (e->modifiers() == Qt::ControlModifier))
-#else
-  else if((e->key() == Qt::Key_Plus) && (e->state() == (Qt::ControlButton | Qt::ShiftButton)))
-#endif
   {
     tvkFontSize++;
     calculateTVKSize();
   }
-#if QT_VERSION > 0x040000
   else if((e->key() == Qt::Key_8) && (e->modifiers() == Qt::ControlModifier))
-#else
-  else if((e->key() == Qt::Key_Minus) && (e->state() == Qt::ControlButton))
-#endif
   {
     tvkFontSize--;
     calculateTVKSize();
@@ -890,7 +833,7 @@ void ThaiVirtualKeyboard::calculateTVKSize()
 
   // Test several characters to find widest
   QString testam;
-  if(addNULL)
+  if(addSpaceNSM)
     testam.append(QChar(0x25cc));
   testam.append(QChar(am));
 
@@ -910,14 +853,6 @@ void ThaiVirtualKeyboard::calculateTVKSize()
 
   test_glyph_width = fm.boundingRect(QChar(maimalai)).width();
   if(test_glyph_width > glyph_width) glyph_width = test_glyph_width;
-
-/*
-  std::cerr << "am left bearing = " << fm.leftBearing(QChar(am)) << "\n";
-  if(fm.leftBearing(QChar(am)) < 0)
-  {
-    glyph_width -= fm.leftBearing(QChar(am));
-  }
-*/
 
   if((glyph_width > 36) && (glyph_height > 36))
   {
@@ -949,7 +884,6 @@ void ThaiVirtualKeyboard::calculateTVKSize()
 // Return true if font family doesn't support Thai
 bool ThaiVirtualKeyboard::backupFontRenderer(const QString &family) const
 {
-#if QT_VERSION > 0x040000
   QFontDatabase qdb;
   QList<QFontDatabase::WritingSystem> sys = qdb.writingSystems(family);
 
@@ -958,13 +892,12 @@ bool ThaiVirtualKeyboard::backupFontRenderer(const QString &family) const
   {
     if(it.next() == QFontDatabase::Thai)
     {
-      // std::cerr << "Font " << family.toStdString() << " has Thai glyphs\n";
+      // Font has Thai glyphs
       return(false);
     }
   }
-#endif
 
-  // std::cerr << "Font " << family.toStdString() << " does not have Thai glyphs\n";
+  // Font does not have Thai glyphs
   return(true);
 }
 

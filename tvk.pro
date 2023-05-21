@@ -22,8 +22,8 @@ QT          += widgets
 
 # Input
 
-HEADERS += ThaiVirtualKeyboard.h
+HEADERS     += ThaiVirtualKeyboard.h
 
-SOURCES += virtualkb.cc \
-           ThaiVirtualKeyboard.cc
+SOURCES     += virtualkb.cc \
+               ThaiVirtualKeyboard.cc
 
